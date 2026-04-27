@@ -121,7 +121,7 @@ def _(mo, ui_controls):
 
 
 @app.cell
-def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, sys, zipfile):
+def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, zipfile):
     ano_val = str(ano_input.value)
     ano_0_val = str(int(ano_val) - 1)
     period = f"{ano_0_val}-{ano_val}"
@@ -143,23 +143,23 @@ def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, sys, zipfile):
             if classifications:
                 for c, v in classifications.items():
                     url += f"/c{c}/{v}"
-            
+
             response = requests.get(url, timeout=120)
             if response.status_code != 200:
                 print(f"Erro SIDRA HTTP {response.status_code}")
                 return pd.DataFrame(columns=['COD_IBGE', ano_0_val, ano_val])
-                
+
             data = response.json()
             if not data or len(data) < 2:
                 return pd.DataFrame(columns=['COD_IBGE', ano_0_val, ano_val])
-                
+
             df = pd.DataFrame(data)
             if df.empty:
                 return pd.DataFrame(columns=['COD_IBGE', ano_0_val, ano_val])
 
             df.columns = df.iloc[0]
             df = df[1:].reset_index(drop=True)
-            df = df.iloc[:, [5,4,8]]
+            df = df[['Município (Código)', 'Valor', 'Ano']]
             df = df.replace(['-',"..."], np.nan)
             df['Valor'] = pd.to_numeric(df['Valor'])
             df = df.rename(columns={'Município (Código)': 'COD_IBGE'})
@@ -294,6 +294,7 @@ def _(
     rota_input,
     scale_color_manual,
     scale_fill_gradientn,
+    sys,
     theme,
     theme_void,
 ):
