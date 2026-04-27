@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+.vscode/
+shapefiles/
+temp_dashboard.py
+__marimo__/
+.python-version
