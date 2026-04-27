@@ -129,17 +129,14 @@ def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, sys, zipfile):
     if sys.platform == "emscripten":
         from pyodide.http import open_url
         import js
-        try:
-            # No Pyodide, o objeto 'js' costuma ser o próprio escopo global
-            current_href = str(js.location.href)
-        except AttributeError:
-            current_href = str(js.window.location.href)
-        
-        base_url = current_href.split('?')[0]
-        if base_url.endswith('index.html'):
-            base_url = base_url.replace('index.html', '')
-        if not base_url.endswith('/'):
-            base_url += '/'
+        # O código roda dentro de um Web Worker, então js.location.href
+        # aponta para o script do worker (ex: .../assets/worker-xxx.js),
+        # não para a URL da página. Precisamos subir para a raiz do site.
+        worker_href = str(js.location.href)
+        if '/assets/' in worker_href:
+            base_url = worker_href.split('/assets/')[0] + '/'
+        else:
+            base_url = worker_href.rsplit('/', 1)[0] + '/'
         csv_url = base_url + 'classificacao_municipios_SDR.csv'
         try:
             classificacoes = pd.read_csv(open_url(csv_url), dtype=str)
