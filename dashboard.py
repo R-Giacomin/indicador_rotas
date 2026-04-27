@@ -129,7 +129,13 @@ def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, sys, zipfile):
     if sys.platform == "emscripten":
         from pyodide.http import open_url
         import js
-        base_url = str(js.window.location.href).split('?')[0]
+        try:
+            # No Pyodide, o objeto 'js' costuma ser o próprio escopo global
+            current_href = str(js.location.href)
+        except AttributeError:
+            current_href = str(js.window.location.href)
+        
+        base_url = current_href.split('?')[0]
         if base_url.endswith('index.html'):
             base_url = base_url.replace('index.html', '')
         if not base_url.endswith('/'):
