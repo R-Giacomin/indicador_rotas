@@ -128,7 +128,17 @@ def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, sys, zipfile):
 
     if sys.platform == "emscripten":
         from pyodide.http import open_url
-        classificacoes = pd.read_csv(open_url('classificacao_municipios_SDR.csv'), dtype=str)
+        import js
+        base_url = str(js.window.location.href).split('?')[0]
+        if base_url.endswith('index.html'):
+            base_url = base_url.replace('index.html', '')
+        if not base_url.endswith('/'):
+            base_url += '/'
+        csv_url = base_url + 'classificacao_municipios_SDR.csv'
+        try:
+            classificacoes = pd.read_csv(open_url(csv_url), dtype=str)
+        except Exception as e:
+            raise Exception(f"Erro ao carregar CSV no WASM ({csv_url}): {e}")
     else:
         classificacoes = pd.read_csv('classificacao_municipios_SDR.csv', dtype=str)
 
