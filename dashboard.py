@@ -121,7 +121,7 @@ def _(mo, ui_controls):
 
 
 @app.cell
-def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, zipfile):
+def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, sys, zipfile):
     ano_val = str(ano_input.value)
     ano_0_val = str(int(ano_val) - 1)
     period = f"{ano_0_val}-{ano_val}"
