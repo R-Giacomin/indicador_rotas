@@ -62,7 +62,7 @@ def _(mo):
 
     ```
     * O código requisita os dados direto da API do SIDRA do IBGE
-    * Observe que o indicador do ano de referência só fica disponível a partir de setembro no ano seguinte (publicação das pesquisas do IBGE).
+    * Observe que o indicador do ano de referência só fica disponível a partir de setembro no ano seguinte.
 
     ```
     ## Indicador de ganho ou perda de participação da Rota
@@ -96,7 +96,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    ano_input = mo.ui.number(start=2000, stop=2030, step=1, value=2024, label="Ano de Referência:")
+    ano_input = mo.ui.dropdown(options=[str(y) for y in range(2000, 2031)], value="2024", label="Ano de Referência:")
     rota_input = mo.ui.dropdown(
         options=["Leite", "Mel", "Pescado", "Cordeiro", "Açaí", "Cacau", "Todas as Rotas (Média PPA e PEI)"],
         value="Leite",
