@@ -62,10 +62,10 @@ def _(mo):
 
     ```
     * O código requisita os dados direto da API do SIDRA do IBGE
+    * Observe que o indicador do ano de referência só fica disponível a partir de setembro no ano seguinte (publicação das pesquisas do IBGE).
+
     ```
-
     ## Indicador de ganho ou perda de participação da Rota
-
     ---
 
     **Fórmula de cálculo:**
@@ -126,7 +126,11 @@ def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, zipfile):
     ano_0_val = str(int(ano_val) - 1)
     period = f"{ano_0_val}-{ano_val}"
 
-    classificacoes = pd.read_csv('classificacao_municipios_SDR.csv', dtype=str)
+    if sys.platform == "emscripten":
+        from pyodide.http import open_url
+        classificacoes = pd.read_csv(open_url('classificacao_municipios_SDR.csv'), dtype=str)
+    else:
+        classificacoes = pd.read_csv('classificacao_municipios_SDR.csv', dtype=str)
 
     configs = {
         "Leite": {'table_code': '74', 'variable': '215', 'classifications': {"80": "2682"}, 'rota_col': 'R_LEITE'},
