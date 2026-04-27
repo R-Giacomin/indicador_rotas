@@ -7,7 +7,7 @@ app = marimo.App(width="medium", app_title="Indicador do Rotas")
 @app.cell
 def _():
     import marimo as mo
-    import sidrapy
+    import sys
     import pandas as pd
     import numpy as np
     import requests
@@ -16,13 +16,12 @@ def _():
     import io
 
     # Geospatial imports guarded against WASM
-    if not mo.is_wasm():
+    if sys.platform != "emscripten":
         import geopandas as gpd
         import geobr
         from plotnine import ggplot, aes, geom_map, geom_rect, scale_fill_gradientn, scale_color_manual, annotate, coord_fixed, theme_void, theme, element_rect, element_text, element_blank, labs
     else:
         gpd = geobr = ggplot = aes = geom_map = geom_rect = scale_fill_gradientn = scale_color_manual = annotate = coord_fixed = theme_void = theme = element_rect = element_text = element_blank = labs = None
-
     return (
         aes,
         coord_fixed,
@@ -42,7 +41,7 @@ def _():
         requests,
         scale_color_manual,
         scale_fill_gradientn,
-        sidrapy,
+        sys,
         theme,
         theme_void,
         zipfile,
@@ -122,7 +121,7 @@ def _(mo, ui_controls):
 
 
 @app.cell
-def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, sidrapy, zipfile):
+def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, sys, zipfile):
     ano_val = str(ano_input.value)
     ano_0_val = str(int(ano_val) - 1)
     period = f"{ano_0_val}-{ano_val}"
@@ -140,15 +139,21 @@ def _(ano_input, geobr, gpd, io, mo, np, os, pd, requests, sidrapy, zipfile):
 
     def fetch_sidra_data(table_code, variable, classifications, period_str):
         try:
-            df = sidrapy.get_table(
-                table_code=table_code,
-                period=period_str,
-                territorial_level="6",
-                ibge_territorial_code="all",
-                variable=variable,
-                classifications=classifications,
-                timeout=120
-            )
+            url = f"https://apisidra.ibge.gov.br/values/t/{table_code}/n6/all/v/{variable}/p/{period_str}"
+            if classifications:
+                for c, v in classifications.items():
+                    url += f"/c{c}/{v}"
+            
+            response = requests.get(url, timeout=120)
+            if response.status_code != 200:
+                print(f"Erro SIDRA HTTP {response.status_code}")
+                return pd.DataFrame(columns=['COD_IBGE', ano_0_val, ano_val])
+                
+            data = response.json()
+            if not data or len(data) < 2:
+                return pd.DataFrame(columns=['COD_IBGE', ano_0_val, ano_val])
+                
+            df = pd.DataFrame(data)
             if df.empty:
                 return pd.DataFrame(columns=['COD_IBGE', ano_0_val, ano_val])
 
@@ -311,7 +316,7 @@ def _(
 
         # Carregar mapas se não for Todas as Rotas
         uf_map, brazil_map = None, None
-        if rota_input.value != "Todas as Rotas (Média PPA e PEI)" and not mo.is_wasm():
+        if rota_input.value != "Todas as Rotas (Média PPA e PEI)" and sys.platform != "emscripten":
             _spinner.update("Baixando e carregando malha geográfica do IBGE...")
             uf_map, brazil_map = load_base_maps(ano_val)
 
@@ -394,7 +399,7 @@ def _(
             _output_blocks.append(mo.ui.table(df_reg_copy, selection=None))
 
             # Geração dos Mapas
-            if mo.is_wasm():
+            if sys.platform == "emscripten":
                 _output_blocks.append(mo.md("---"))
                 _output_blocks.append(mo.md("### Mapas Geográficos"))
                 _output_blocks.append(mo.callout("A geração de mapas espaciais está desabilitada na versão Web para garantir alta performance e navegação instantânea. Os dados completos continuam disponíveis nas tabelas acima.", kind="info"))
